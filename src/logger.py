@@ -51,6 +51,7 @@ LOG_DIC = {
 
 }
 
+
 def logger(logfile="spider.log", level=1):
 	if not 1 <= level <= 5:
 		raise Exception("[args error]: 1 <= level <= 5")
