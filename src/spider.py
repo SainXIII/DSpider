@@ -43,7 +43,7 @@ class Spider(object):
 	""
 	def __init__(self, threads, depth=0, crawl_tags=[], ignore=[], cum_headers={}, dynamic_parse=False):
 		self.site = ''
-		self.task_queue = Queue.Queue()
+		#self.task_queue = Queue.Queue()
 		self.link_cache = []
 		self.max_threads = threads
 		self.depth = depth
@@ -64,23 +64,9 @@ class Spider(object):
 
 		u = urlparse.urlparse(url)
 		self.origin = (u.scheme, u.netloc)
-		
-		self.task_queue.put(urlobj)
-
-	def run(self):
-		threadpool = Threadpool(self.work, max_threads=self.max_threads, thread=Thread, queue=self.task_queue)
-		threadpool.add([self.task_queue.get(),])
+		threadpool = Threadpool(self.work, max_threads=self.max_threads, thread=Thread)
+		threadpool.add([urlobj,])
 		threadpool.join()
-		#"single process"
-		#while True:
-		#	task = self.task_queue.get()
-		#	urlobjs = self.work(task)
-		#	if urlobjs is None:
-		#		break
-		#	for i in urlobjs:
-		#		self.task_queue.put(i)
-		#	if self.task_queue.empty():
-		#		break
 
 	def work(self, urlobj):
 		fetcher = Fetcher()
@@ -139,8 +125,7 @@ if __name__ == '__main__':
 					 'Accept-Encoding':'gzip,deflate,sdch'}
 
 	crawl_tags = ['a', 'base', 'iframe', 'frame', 'object']
-	ignore = ['js','css','png','jpg','gif','bmp','svg','exif','jpeg','exe','rar','zip']
-	spider = Spider(10, depth=10, crawl_tags=crawl_tags, ignore=ignore)
+	ignore = ['js','css','png','jpg','gif','bmp','svg','exif','jpeg','exe','rar','zip', 'doc']
+	spider = Spider(10, depth=20, crawl_tags=crawl_tags, ignore=ignore)
 	logger.logger()
 	spider.start(sys.argv[1])
-	spider.run()

@@ -40,7 +40,7 @@ class Threadpool(object):
 		self.worker = worker
 		self.thread = thread
 		self.lock = lock
-		self.task_queue = queue
+		self.task_queue = queue()
 		self.max_threads = max_threads
 		self.active_threads = 0
 
