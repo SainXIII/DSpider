@@ -5,27 +5,34 @@ from data import UrlObject
 from utils import x2Unicode
 from parser import Webkit, StaticAnalyzer
 from threadpool import Thread, Threadpool
+import logger
 
+import logging
 import urlparse
 import Queue
 import requests
 import os
 
+log_spider = logging.getLogger('spider')
+
 class Fetcher(object):
 	""
-	def __init__(self, header={}, maxlen=2*20):
+	def __init__(self, header={}, maxlen=2**30):
 		self.maxlen = maxlen
 		self.header = header
 
 	def fetch(self, urlobj):
 		req = requests.get(urlobj.url, headers=self.header)
 		
+		if req.status_code > 400:
+			log_spider.debug('visit %s page error(%d)' % (req.url, req.status_code))
+			return u''
 		if req.headers.get('content-type').find('text/html') == -1:
-			print req.headers.get('content-type')
-			print 'type is note text/html'
+			log_spider.debug('Content-Type is not text/tml(%s)' % req.headers.get('content-type'))
 			return u''
 		length = req.headers.get('content-length')
 		if length and (int(length) > self.maxlen):
+			log_spider.debug('Content is to long(%s)' % length)
 			return u''
 		if req.content:
 			html = x2Unicode(req.content)
@@ -35,6 +42,7 @@ class Fetcher(object):
 class Spider(object):
 	""
 	def __init__(self, threads, depth=0, crawl_tags=[], ignore=[], cum_headers={}, dynamic_parse=False):
+		self.site = ''
 		self.task_queue = Queue.Queue()
 		self.link_cache = []
 		self.max_threads = threads
@@ -51,6 +59,7 @@ class Spider(object):
 
 	def start(self, url):
 		url = x2Unicode(url)
+		self.site = url
 		urlobj = UrlObject(url)
 
 		u = urlparse.urlparse(url)
@@ -59,17 +68,27 @@ class Spider(object):
 		self.task_queue.put(urlobj)
 
 	def run(self):
-		threadpool = Threadpool(self.work, max_htreads=self.max_threads, thread=Thread, queue=self.task_queue)
-		threadpool.add(self.task_queue.get())
+		threadpool = Threadpool(self.work, max_threads=self.max_threads, thread=Thread, queue=self.task_queue)
+		threadpool.add([self.task_queue.get(),])
 		threadpool.join()
+		#"single process"
+		#while True:
+		#	task = self.task_queue.get()
+		#	urlobjs = self.work(task)
+		#	if urlobjs is None:
+		#		break
+		#	for i in urlobjs:
+		#		self.task_queue.put(i)
+		#	if self.task_queue.empty():
+		#		break
 
 	def work(self, urlobj):
 		fetcher = Fetcher()
 		html = fetcher.fetch(urlobj)
-		if html is '':
+		if html is u'':
 			return None
 		urlobj.html = html				
-		urlobjs = craw(urlobj)
+		urlobjs = self.crawl(urlobj)
 		return urlobjs
 		
 	def crawl(self, urlobj):
@@ -82,14 +101,20 @@ class Spider(object):
 		else:
 			llink = self.engine.get_links(urlobj.html, urlobj.url, self.crawl_tags)
 		for link in llink:
+			link = self.unify_url(link)
 			link = x2Unicode(link)
 			if not self.check_url(link):
 				continue
 			self.link_cache.append(link)
 			urlobj = UrlObject(link, depth=depth)
 			urls.append(urlobj)
-		#print self.link_cache
 		return urls
+	
+	def unify_url(self, link):
+		url = link.strip()
+		url = url.split('#')[0]
+
+		return url
 	
 	def check_url(self, link):
 		if link in self.link_cache:
@@ -108,12 +133,14 @@ class Spider(object):
 		return False
 
 if __name__ == '__main__':		
+	import sys
 	human_headers = {'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 					 'User-Agent':'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1700.76 Safari/537.36',
 					 'Accept-Encoding':'gzip,deflate,sdch'}
 
 	crawl_tags = ['a', 'base', 'iframe', 'frame', 'object']
 	ignore = ['js','css','png','jpg','gif','bmp','svg','exif','jpeg','exe','rar','zip']
-	spider = Spider(0, depth=2, crawl_tags=crawl_tags, ignore=ignore)
-	spider.start('http://it.ouc.edu.cn')
+	spider = Spider(10, depth=10, crawl_tags=crawl_tags, ignore=ignore)
+	logger.logger()
+	spider.start(sys.argv[1])
 	spider.run()

@@ -4,6 +4,7 @@
 from splinter import Browser
 import lxml.html
 import urlparse
+import logger
 
 class Webkit(object):
 	""
@@ -53,8 +54,9 @@ class StaticAnalyzer(object):
 
 if __name__ == '__main__':
 	import requests
-	html = requests.get('http://it.ouc.edu.cn').content
+	import sys
+	html = requests.get(sys.argv[1]).content
 	a = StaticAnalyzer()
-	print a.get_links(html, 'http://it.ouc.edu.cn', ['a', 'iframe'])
+	print a.get_links(html, sys.argv[1], ['a', 'iframe', ])
 	#a = Webkit()
 	#print a.get_links('http://it.ouc.edu.cn')

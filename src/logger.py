@@ -5,23 +5,23 @@ import logging
 from logging import config
 
 LOG_FMT = {
-	1: {'format': '[%(levelno)s] %(asctime)s %(message)s'},
-	2: {'format': '[%(levelno)s] %(asctime)s %(name)s %(message)s'},
-	3: {'format': '[%(levelno)s] %(asctime)s %(name)s %(message)s'},
-	4: {'format': '[%(levelno)s] %(asctime)s %(name)s %(thread)d %(threadName)s %(message)s'},
-	5: {'format': '[%(levelno)s] %(asctime)s %(name)s %(thread)d %(threadName)s %(filename)s %(message)s'},
+	1: {'format': '%(levelname)s %(asctime)s %(message)s'},
+	2: {'format': '%(levelname)s %(asctime)s %(name)s %(message)s'},
+	3: {'format': '%(levelname)s %(asctime)s %(name)s %(message)s'},
+	4: {'format': '%(levelname)s %(asctime)s %(name)s %(thread)d %(threadName)s %(message)s'},
+	5: {'format': '%(levelname)s %(asctime)s %(name)s %(thread)d %(threadName)s %(filename)s %(message)s'},
 }
 
 LOG_DIC = {
-	'verion': 1,
-	'formatter': {
+	'version': 1,
+	'formatters': {
 		'logfile_fmt': {
-			'format': '%[%(levelno)s] (asctime)s %(message)s',
-		}
+			'format': '%(levelname)s %(asctime)s %(message)s',
+		},
 		'display_fmt': {
-			'format': '%(message)s %(asctime)s',
+			'format': '%(levelname)s %(asctime)s %(threadName)s %(message)s',
 		}
-	}
+	},
 	"handlers": {
 		"logfile_hld": {
 			"class": "logging.FileHandler",
@@ -30,18 +30,16 @@ LOG_DIC = {
 			"level": "DEBUG",
 		},
 		"display": {
-			# "class": "logging.FileHandler",
-			# "filename": "spider.log",
 			"class": "logging.StreamHandler",
 			"formatter": "display_fmt",
-			"level": "INFO",
+			"level": "DEBUG"
 		}
 	},
 
 	"loggers": {
 		"spider": {
 			"level": "DEBUG",
-			"handlers": ["logfile_hld",],
+			"handlers": ["logfile_hld", 'display'],
 		},
 		"term": {
 			"level": "INFO",
@@ -61,7 +59,6 @@ def logger(logfile="spider.log", level=1):
 	# print logging.getLevelName(level*10)
 	LOG_DIC["handlers"]["logfile_hld"]["level"] = logging.getLevelName(level*10)
 	LOG_DIC["formatters"]["logfile_fmt"] = LOG_FMT[level]
-	print LOG_DIC["formatters"]["logfile_fmt"]["format"]
     
 	config.dictConfig(LOG_DIC)
 
