@@ -126,6 +126,7 @@ if __name__ == '__main__':
 
 	crawl_tags = ['a', 'base', 'iframe', 'frame', 'object']
 	ignore = ['js','css','png','jpg','gif','bmp','svg','exif','jpeg','exe','rar','zip', 'doc']
-	spider = Spider(10, depth=20, crawl_tags=crawl_tags, ignore=ignore)
+	spider = Spider(10, depth=20, crawl_tags=crawl_tags, ignore=ignore, cum_headers=human_headers)
 	logger.logger()
 	spider.start(sys.argv[1])
+
